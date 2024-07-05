@@ -28,11 +28,7 @@ This repository contains two Python projects related to webcam control and strea
    ```bash
    python webcam.py
 
-    To run `webcamV2.py`
-   ```bash
-   python webcamV2.py
-
-   Open your web browser and navigate to http://localhost:5000 to access the web interface for each application.
+   -Open your web browser and navigate to http://localhost:5000 to access the web interface for each application.
 
 ## Features
 - Streaming: Live streaming of webcam feed.
