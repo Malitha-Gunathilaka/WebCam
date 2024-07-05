@@ -27,7 +27,7 @@ This repository contains two Python projects related to webcam control and strea
     To run `webcam.py`
    ```bash
    python webcam.py
-
+##
    -Open your web browser and navigate to http://localhost:5000 to access the web interface for each application.
 
 ## Features
