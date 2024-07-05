@@ -1,6 +1,6 @@
 import time
 import threading
-from flask import Flask, Response, render_template_string, jsonify, request
+from flask import Flask, Response, render_template_string, jsonify
 import cv2
 
 app = Flask(__name__)
@@ -11,6 +11,7 @@ html_template = '''
 <html>
 <head>
     <title>Phone Camera Feed</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background-color: #282c34; color: white; }
         h1 { color: #61dafb; }
@@ -19,14 +20,14 @@ html_template = '''
         button { padding: 10px 20px; margin: 5px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; background-color: #61dafb; color: #282c34; width: 180px; }
         button:hover { background-color: #21a1f1; }
         img { width: 70%; max-width: 800px; margin-top: 20px; border: 2px solid #61dafb; }
-        .icon { width: 20px; height: 20px; vertical-align: middle; margin-right: 5px; }
+        .icon { margin-right: 5px; }
     </style>
     <script>
         function toggleCamera() {
             fetch('/toggle_camera')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('camera-button').innerText = data.status ? 'Turn OFF' : 'Turn ON';
+                    document.getElementById('camera-button').innerHTML = data.status ? '<i class="fas fa-video"></i> Turn OFF' : '<i class="fas fa-video-slash"></i> Turn ON';
                     document.getElementById('camera-button').className = data.status ? 'btn-on' : 'btn-off';
                 });
         }
@@ -35,7 +36,7 @@ html_template = '''
             fetch('/rotate_camera')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('rotate-button').innerText = `Rotate (${data.rotation})`;
+                    document.getElementById('rotate-button').innerHTML = `<i class="fas fa-redo-alt"></i> Rotate (${data.rotation})`;
                 });
         }
 
@@ -43,7 +44,7 @@ html_template = '''
             fetch('/mirror_camera')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('mirror-button').innerText = data.mirror ? 'Turn OFF' : 'Turn ON';
+                    document.getElementById('mirror-button').innerHTML = data.mirror ? '<i class="fas fa-toggle-on"></i> Turn OFF' : '<i class="fas fa-toggle-off"></i> Turn ON';
                     document.getElementById('mirror-button').className = data.mirror ? 'btn-on' : 'btn-off';
                 });
         }
@@ -53,13 +54,13 @@ html_template = '''
     <h1>Phone Camera Feed</h1>
     <div class="controls">
         <div class="control-item">
-            <button id="camera-button" class="btn-on" onclick="toggleCamera()">Turn OFF</button>
+            <button id="camera-button" class="btn-on" onclick="toggleCamera()"><i class="fas fa-video"></i> Turn OFF</button>
         </div>
         <div class="control-item">
-            <button id="rotate-button" onclick="rotateCamera()">Rotate (None)</button>
+            <button id="rotate-button" onclick="rotateCamera()"><i class="fas fa-redo-alt"></i> Rotate (None)</button>
         </div>
         <div class="control-item">
-            <button id="mirror-button" class="btn-off" onclick="mirrorCamera()">Turn ON</button>
+            <button id="mirror-button" class="btn-off" onclick="mirrorCamera()"><i class="fas fa-toggle-off"></i> Turn ON</button>
         </div>
     </div>
     <img src="{{ url_for('video_feed') }}" id="video-feed">
