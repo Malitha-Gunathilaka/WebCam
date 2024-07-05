@@ -1,6 +1,6 @@
 import time
 import threading
-from flask import Flask, Response, render_template_string, jsonify
+from flask import Flask, Response, render_template_string, jsonify, request
 import cv2
 
 app = Flask(__name__)
@@ -12,11 +12,13 @@ html_template = '''
 <head>
     <title>Phone Camera Feed</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; }
-        h1 { color: #333; }
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #282c34; color: white; }
+        h1 { color: #61dafb; }
         .controls { margin: 20px; }
-        button { padding: 10px 20px; margin: 5px; font-size: 16px; }
-        img { width: 80%; max-width: 720px; }
+        button { padding: 10px 20px; margin: 5px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; background-color: #61dafb; color: #282c34; }
+        button:hover { background-color: #21a1f1; }
+        img { width: 80%; max-width: 720px; margin-top: 20px; border: 2px solid #61dafb; }
+        .icon { width: 20px; height: 20px; vertical-align: middle; margin-right: 5px; }
     </style>
     <script>
         function toggleCamera() {
@@ -27,11 +29,19 @@ html_template = '''
                 });
         }
 
-        function rotateCamera(direction) {
-            fetch('/rotate_camera?direction=' + direction)
+        function rotateCamera() {
+            fetch('/rotate_camera')
                 .then(response => response.json())
                 .then(data => {
-                    // No action needed on the client side
+                    document.getElementById('rotate-status').innerText = data.rotation;
+                });
+        }
+
+        function mirrorCamera() {
+            fetch('/mirror_camera')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('mirror-status').innerText = data.mirror ? 'ON' : 'OFF';
                 });
         }
     </script>
@@ -40,9 +50,11 @@ html_template = '''
     <h1>Phone Camera Feed</h1>
     <div class="controls">
         <button onclick="toggleCamera()">Toggle Camera</button>
-        <button onclick="rotateCamera('vertical')">Rotate Vertical</button>
-        <button onclick="rotateCamera('horizontal')">Rotate Horizontal</button>
+        <button onclick="rotateCamera()">Rotate</button>
+        <button onclick="mirrorCamera()">Mirror</button>
         <p>Camera is <span id="camera-status">ON</span></p>
+        <p>Rotation: <span id="rotate-status">None</span></p>
+        <p>Mirroring: <span id="mirror-status">OFF</span></p>
     </div>
     <img src="{{ url_for('video_feed') }}" id="video-feed">
 </body>
@@ -50,8 +62,8 @@ html_template = '''
 '''
 
 camera_on = True
-rotate_vertical = False
-rotate_horizontal = False
+rotation_state = 0  # 0: None, 1: 90 degrees, 2: 180 degrees, 3: 270 degrees
+mirror_state = False
 
 @app.route('/')
 def index():
@@ -65,13 +77,16 @@ def toggle_camera():
 
 @app.route('/rotate_camera')
 def rotate_camera():
-    global rotate_vertical, rotate_horizontal
-    direction = request.args.get('direction')
-    if direction == 'vertical':
-        rotate_vertical = not rotate_vertical
-    elif direction == 'horizontal':
-        rotate_horizontal = not rotate_horizontal
-    return jsonify(success=True)
+    global rotation_state
+    rotation_state = (rotation_state + 1) % 4
+    rotation = "None" if rotation_state == 0 else f"{rotation_state * 90} degrees"
+    return jsonify(rotation=rotation)
+
+@app.route('/mirror_camera')
+def mirror_camera():
+    global mirror_state
+    mirror_state = not mirror_state
+    return jsonify(mirror=mirror_state)
 
 class VideoCamera:
     def __init__(self, source):
@@ -93,10 +108,14 @@ class VideoCamera:
     def get_frame(self):
         frame = self.frame
         if frame is not None:
-            if rotate_vertical:
-                frame = cv2.flip(frame, 0)  # Flip vertically
-            if rotate_horizontal:
-                frame = cv2.flip(frame, 1)  # Flip horizontally
+            if rotation_state != 0:
+                angle = rotation_state * 90
+                (h, w) = frame.shape[:2]
+                center = (w / 2, h / 2)
+                M = cv2.getRotationMatrix2D(center, angle, 1.0)
+                frame = cv2.warpAffine(frame, M, (w, h))
+            if mirror_state:
+                frame = cv2.flip(frame, 1)  # Mirror horizontally
         return self.grabbed, frame
 
 camera = VideoCamera('http://192.168.1.38:8080/video')
