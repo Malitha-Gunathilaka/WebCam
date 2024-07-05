@@ -1,3 +1,4 @@
+import os
 import time
 import threading
 from flask import Flask, Response, render_template_string, jsonify
@@ -19,8 +20,11 @@ html_template = '''
         .control-item { margin: 10px; }
         button { padding: 10px 20px; margin: 5px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; background-color: #61dafb; color: #282c34; width: 180px; }
         button:hover { background-color: #21a1f1; }
-        img { width: 70%; max-width: 800px; margin-top: 20px; border: 2px solid #61dafb; }
+        img { width: 70%; max-width: 800px; margin-top: 20px;margin-top: 20px; border: 2px solid #61dafb; }
         .icon { margin-right: 5px; }
+        .footer { position: fixed; left: 0; bottom: 0; width: 100%;height:35px; background-color: #333; color: white; text-align: center; padding: 5px 0; }
+        .footer a { color: #61dafb; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
     </style>
     <script>
         function toggleCamera() {
@@ -48,6 +52,14 @@ html_template = '''
                     document.getElementById('mirror-button').className = data.mirror ? 'btn-on' : 'btn-off';
                 });
         }
+
+        function capturePhoto() {
+            fetch('/capture_photo')
+                .then(response => response.json())
+                .then(data => {
+                    alert('Photo captured and saved!');
+                });
+        }
     </script>
 </head>
 <body>
@@ -62,8 +74,14 @@ html_template = '''
         <div class="control-item">
             <button id="mirror-button" class="btn-off" onclick="mirrorCamera()"><i class="fas fa-toggle-off"></i> Turn ON</button>
         </div>
+        <div class="control-item">
+            <button onclick="capturePhoto()"><i class="fas fa-camera"></i> Capture Photo</button>
+        </div>
     </div>
     <img src="{{ url_for('video_feed') }}" id="video-feed">
+    <div class="footer">
+        <p>Developed by <a href="mailto:malithavisada@gmail.com">Malitha Visada</a> &nbsp&nbsp <a href="https://linkedin.com/in/malithavisada" target="_blank"><i class="fab fa-linkedin"></i></a> &nbsp <a href="https://github.com/Malitha-Gunathilaka" target="_blank"><i class="fab fa-github"></i></a></p>
+    </div>
 </body>
 </html>
 '''
@@ -145,6 +163,21 @@ def gen(camera):
 def video_feed():
     return Response(gen(camera),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/capture_photo')
+def capture_photo():
+    global camera
+    _, frame = camera.get_frame()
+    if frame is not None:
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        filename = f"images/photo_{timestamp}.jpg"
+        cv2.imwrite(filename, frame)
+        return jsonify(status='success')
+    else:
+        return jsonify(status='error')
+
+if not os.path.exists('images'):
+    os.makedirs('images')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
