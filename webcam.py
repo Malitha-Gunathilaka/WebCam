@@ -14,19 +14,20 @@ html_template = '''
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background-color: #282c34; color: white; }
         h1 { color: #61dafb; }
-        .controls { margin: 20px; display: flex; justify-content: center; align-items: center; }
+        .controls { margin: 20px; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; }
         .control-item { margin: 10px; }
-        button { padding: 10px 20px; margin: 5px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; background-color: #61dafb; color: #282c34; }
+        button { padding: 10px 20px; margin: 5px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; background-color: #61dafb; color: #282c34; width: 180px; }
         button:hover { background-color: #21a1f1; }
-        img { width: 90%; max-width: 1080px; margin-top: 20px; border: 2px solid #61dafb; }
+        img { width: 70%; max-width: 800px; margin-top: 20px; border: 2px solid #61dafb; }
+        .icon { width: 20px; height: 20px; vertical-align: middle; margin-right: 5px; }
     </style>
     <script>
         function toggleCamera() {
             fetch('/toggle_camera')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('camera-status').innerText = data.status ? 'ON' : 'OFF';
                     document.getElementById('camera-button').innerText = data.status ? 'Turn OFF' : 'Turn ON';
+                    document.getElementById('camera-button').className = data.status ? 'btn-on' : 'btn-off';
                 });
         }
 
@@ -42,8 +43,8 @@ html_template = '''
             fetch('/mirror_camera')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('mirror-status').innerText = data.mirror ? 'ON' : 'OFF';
                     document.getElementById('mirror-button').innerText = data.mirror ? 'Turn OFF' : 'Turn ON';
+                    document.getElementById('mirror-button').className = data.mirror ? 'btn-on' : 'btn-off';
                 });
         }
     </script>
@@ -52,16 +53,13 @@ html_template = '''
     <h1>Phone Camera Feed</h1>
     <div class="controls">
         <div class="control-item">
-            <span>Camera is: <span id="camera-status">ON</span></span>
-            <button id="camera-button" onclick="toggleCamera()">Turn OFF</button>
+            <button id="camera-button" class="btn-on" onclick="toggleCamera()">Turn OFF</button>
         </div>
         <div class="control-item">
-            <span>Rotation:</span>
             <button id="rotate-button" onclick="rotateCamera()">Rotate (None)</button>
         </div>
         <div class="control-item">
-            <span>Mirroring:</span>
-            <button id="mirror-button" onclick="mirrorCamera()">Turn ON</button>
+            <button id="mirror-button" class="btn-off" onclick="mirrorCamera()">Turn ON</button>
         </div>
     </div>
     <img src="{{ url_for('video_feed') }}" id="video-feed">
