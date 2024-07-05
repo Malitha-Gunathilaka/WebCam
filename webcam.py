@@ -14,11 +14,11 @@ html_template = '''
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background-color: #282c34; color: white; }
         h1 { color: #61dafb; }
-        .controls { margin: 20px; }
+        .controls { margin: 20px; display: flex; justify-content: center; align-items: center; }
+        .control-item { margin: 10px; }
         button { padding: 10px 20px; margin: 5px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; background-color: #61dafb; color: #282c34; }
         button:hover { background-color: #21a1f1; }
-        img { width: 80%; max-width: 720px; margin-top: 20px; border: 2px solid #61dafb; }
-        .icon { width: 20px; height: 20px; vertical-align: middle; margin-right: 5px; }
+        img { width: 90%; max-width: 1080px; margin-top: 20px; border: 2px solid #61dafb; }
     </style>
     <script>
         function toggleCamera() {
@@ -26,6 +26,7 @@ html_template = '''
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('camera-status').innerText = data.status ? 'ON' : 'OFF';
+                    document.getElementById('camera-button').innerText = data.status ? 'Turn OFF' : 'Turn ON';
                 });
         }
 
@@ -33,7 +34,7 @@ html_template = '''
             fetch('/rotate_camera')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('rotate-status').innerText = data.rotation;
+                    document.getElementById('rotate-button').innerText = `Rotate (${data.rotation})`;
                 });
         }
 
@@ -42,6 +43,7 @@ html_template = '''
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('mirror-status').innerText = data.mirror ? 'ON' : 'OFF';
+                    document.getElementById('mirror-button').innerText = data.mirror ? 'Turn OFF' : 'Turn ON';
                 });
         }
     </script>
@@ -49,12 +51,18 @@ html_template = '''
 <body>
     <h1>Phone Camera Feed</h1>
     <div class="controls">
-        <button onclick="toggleCamera()">Toggle Camera</button>
-        <button onclick="rotateCamera()">Rotate</button>
-        <button onclick="mirrorCamera()">Mirror</button>
-        <p>Camera is <span id="camera-status">ON</span></p>
-        <p>Rotation: <span id="rotate-status">None</span></p>
-        <p>Mirroring: <span id="mirror-status">OFF</span></p>
+        <div class="control-item">
+            <span>Camera is: <span id="camera-status">ON</span></span>
+            <button id="camera-button" onclick="toggleCamera()">Turn OFF</button>
+        </div>
+        <div class="control-item">
+            <span>Rotation:</span>
+            <button id="rotate-button" onclick="rotateCamera()">Rotate (None)</button>
+        </div>
+        <div class="control-item">
+            <span>Mirroring:</span>
+            <button id="mirror-button" onclick="mirrorCamera()">Turn ON</button>
+        </div>
     </div>
     <img src="{{ url_for('video_feed') }}" id="video-feed">
 </body>
@@ -79,7 +87,7 @@ def toggle_camera():
 def rotate_camera():
     global rotation_state
     rotation_state = (rotation_state + 1) % 4
-    rotation = "None" if rotation_state == 0 else f"{rotation_state * 90} degrees"
+    rotation = "None" if rotation_state == 0 else f"{rotation_state * 90} "
     return jsonify(rotation=rotation)
 
 @app.route('/mirror_camera')
